@@ -89,14 +89,13 @@ class WsClient():
             index = 0
             while index < len(audio_data):
                 chunk = audio_data[index : index + bytes_per_chunk]
-                time.sleep(0.001)
-                # time.sleep(len(chunk) / sample_rate / channels / sample_width)
-                print("send chunk")
+                # time.sleep(0.001)
+                time.sleep(len(chunk) / sample_rate / channels / sample_width)
+                print("send data")
                 ws.send(chunk, 2)
                 index += bytes_per_chunk
 
             # 发送尾包
-            print("send_stop")
             ws.send(json.dumps(self.end_signal))
         Thread(target=run).start()
 
@@ -113,7 +112,7 @@ class WsClient():
             elif json_data['type'] == 'Error':
                 print(json_data)
         except:
-            print("receive")
+            print("receive converted data")
             audio_chunk = bytes_to_np_array(message, 'pcm', 1)[:, 0]
             self.audio_chunks.append(audio_chunk)
 
