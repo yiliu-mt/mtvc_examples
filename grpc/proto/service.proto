@@ -1,0 +1,100 @@
+syntax = "proto3";
+
+package vc.v2;
+
+option java_package = "com.mthreads.ai.protos.vc.v2";
+
+// Service that implements VC API.
+service VoiceConversion {
+  // Convert the input speech to a given voice
+  rpc StreamingVC(stream StreamingVCRequest) returns (stream StreamingVCResponse);
+}
+
+// NextID: 4
+message VoiceConversionConfig {
+
+  // NextID: 5
+  message AudioInfo {
+
+    // the sample rate of the audio
+    int32 sample_rate = 1;
+
+    // the num of channels of the audio
+    int32 channels = 2;
+
+    // the num of bits of the audio
+    int32 bits = 3;
+
+    // the encodings of the audio
+    // only support "pcm" now
+    string audio_encoding = 4;
+  }
+
+  // NextID: 4
+  message Payload {
+    // the voice name of the target speaker
+    string voice = 1;
+
+    // the info of the input audio
+    AudioInfo input_info = 2;
+
+    // the info of the output audio
+    AudioInfo output_info = 3;
+  }
+
+  // signal type, support:
+  // StartConversion: send in the first package
+  // StopConversion: send in the last package
+  string type = 1;
+
+  // the config of the input and output audio
+  Payload payload = 2;
+}
+
+message StreamingVCRequest {
+
+  // NextID: 3
+  oneof request {
+    // In the first request, send the config.
+    // Also, in the end of the conversion, send the stop signal.
+    VoiceConversionConfig config = 1;
+
+    // After the first request, data will be sended continuously.
+    // The data is the audio byte stream.
+    bytes audio_data = 2;
+  }
+}
+
+// NextID: 5
+message VoiceConversionState {
+
+  // the reponse type
+  // ConversionStarted: conversion started
+  // ConversionCompleted: conversion completed
+  // Error: error occurs
+  string type = 1;
+
+  // task_id is used to track the task
+  string task_id = 2;
+
+  // the status code
+  int32 status = 3;
+
+  // the detailed status text
+  string status_text = 4;
+
+}
+
+// NextID: 4
+message StreamingVCResponse {
+
+  // NextID: 3
+  oneof response {
+    // the returned information
+    VoiceConversionState state = 1;
+
+    // the converted data
+    bytes audio_data = 2;
+  }
+
+}
