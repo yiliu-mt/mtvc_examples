@@ -52,13 +52,13 @@ def request_generator(target_voice, input_audio_path, chunk_size, simulate_delay
         payload=service_pb2.VoiceConversionConfig.Payload(
             voice=target_voice,
             input_info=service_pb2.VoiceConversionConfig.AudioInfo(
-                sample_rate=16000,
+                sample_rate=input_sample_rate,
                 channels=1,
                 bits=16,
                 audio_encoding="pcm"
             ),
             output_info=service_pb2.VoiceConversionConfig.AudioInfo(
-                sample_rate=48000,
+                sample_rate=output_sample_rate,
                 channels=1,
                 bits=16,
                 audio_encoding="pcm"
@@ -71,10 +71,10 @@ def request_generator(target_voice, input_audio_path, chunk_size, simulate_delay
     # Stream audio data
     bytes_per_chunk = int(sample_rate * channels * sample_width * chunk_size / 1000.)
     for i in range(0, len(audio_data), bytes_per_chunk):
-        # type = service_pb2.NORMAL_CHUNK if i+bytes_per_chunk < len(audio_data) else service_pb2.LAST_CHUNK
         chunk = audio_data[i:i + bytes_per_chunk]
         if simulate_delay:
-            time.sleep(len(chunk) / sample_rate / sample_width)
+            delay_time = len(chunk) / sample_rate / sample_width
+            time.sleep(delay_time)
         print("sending audio data...")
         yield service_pb2.StreamingVCRequest(audio_data=chunk)
 
@@ -100,7 +100,7 @@ if __name__ == '__main__':
     audio_chunks = []
     for response in responses:
         if response.HasField("state"):
-            if response.state.type == "Error":
+            if response.state.type == "Error" or response.state.status != 1000:
                 raise RuntimeError("Error occurs: {}".format(response.state.status_text))
             elif response.state.type == "ConversionStarted":
                 print("Conversion started")
